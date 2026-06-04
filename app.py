@@ -19,6 +19,14 @@ CREATE TABLE IF NOT EXISTS students(
     year INTEGER
 )
 """)
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS attendance(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_id INTEGER,
+    date TEXT,
+    status TEXT
+)
+""")
 
 conn.commit()
 
@@ -34,10 +42,11 @@ menu = st.sidebar.selectbox(
     "Select Option",
     [
         "Add Student",
-        "View Students"
+        "View Students",
+        "Mark Attendance",
+        "Attendance Report"
     ]
 )
-
 # ---------------------------
 # ADD STUDENT
 # ---------------------------
@@ -84,6 +93,7 @@ if menu == "Add Student":
                     year
                 )
             )
+  
 
             conn.commit()
 
@@ -110,9 +120,101 @@ elif menu == "View Students":
     st.dataframe(
         df,
         use_container_width=True
+  
+    )
+    st.metric(
+    "Total Students",
+    len(df)
+)
+elif menu == "Mark Attendance":
+
+    st.header("📝 Mark Attendance")
+
+    students = pd.read_sql_query(
+        "SELECT * FROM students",
+        conn
     )
 
-    st.metric(
-        "Total Students",
-        len(df)
+    if len(students) == 0:
+
+        st.warning(
+            "Please add students first."
+        )
+
+    else:
+
+        student_id = st.selectbox(
+            "Student ID",
+            students["student_id"]
+        )
+
+        date = st.date_input(
+            "Date"
+        )
+
+        status = st.selectbox(
+            "Status",
+            ["Present", "Absent"]
+        )
+
+        if st.button(
+            "Save Attendance"
+        ):
+
+            cursor.execute(
+                """
+                INSERT INTO attendance
+                (student_id, date, status)
+                VALUES (?, ?, ?)
+                """,
+                (
+                    student_id,
+                    str(date),
+                    status
+                )
+            )
+
+            conn.commit()
+
+            st.success(
+                "Attendance Saved ✅"
+            )
+
+
+elif menu == "Attendance Report":
+
+    st.header(
+        "📊 Attendance Report"
     )
+
+    df = pd.read_sql_query(
+        """
+        SELECT *
+        FROM attendance
+        """,
+        conn
+    )
+
+    st.dataframe(
+        df,
+        use_container_width=True
+    )
+
+    if len(df) > 0:
+
+        present = len(
+            df[
+                df["status"] == "Present"
+            ]
+        )
+
+        total = len(df)
+
+        percentage = (
+            present / total
+        ) * 100
+
+        st.metric(
+            "Attendance %",
+            f"{percentage:.2f}%"
+        )
