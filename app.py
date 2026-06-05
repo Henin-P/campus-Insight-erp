@@ -27,25 +27,35 @@ CREATE TABLE IF NOT EXISTS attendance(
     status TEXT
 )
 """)
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS marks(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_id INTEGER,
+    subject TEXT,
+    mark INTEGER
+)
+""")
 
 conn.commit()
 
 # ---------------------------
 # TITLE
 # ---------------------------
-st.title("🎓 Student ERP System")
+st.title("🎓 Student ERP Portal")
 
 # ---------------------------
 # SIDEBAR MENU
 # ---------------------------
 menu = st.sidebar.selectbox(
     "Select Option",
-    [
-        "Add Student",
-        "View Students",
-        "Mark Attendance",
-        "Attendance Report"
-    ]
+[
+    "Add Student",
+    "View Students",
+    "Mark Attendance",
+    "Attendance Report",
+    "Add Marks",
+    "View Marks"
+]
 )
 # ---------------------------
 # ADD STUDENT
@@ -217,4 +227,89 @@ elif menu == "Attendance Report":
         st.metric(
             "Attendance %",
             f"{percentage:.2f}%"
+        )
+        
+elif menu == "Add Marks":
+
+    st.header("📚 Add Marks")
+
+    students = pd.read_sql_query(
+        "SELECT * FROM students",
+        conn
+    )
+
+    if len(students) == 0:
+
+        st.warning(
+            "Please add students first."
+        )
+
+    else:
+
+        student_id = st.selectbox(
+            "Student ID",
+            students["student_id"]
+        )
+
+        subject = st.text_input(
+            "Subject"
+        )
+
+        mark = st.number_input(
+            "Mark",
+            min_value=0,
+            max_value=100
+        )
+
+        if st.button(
+            "Save Marks"
+        ):
+
+            cursor.execute(
+                """
+                INSERT INTO marks
+                (student_id, subject, mark)
+                VALUES (?, ?, ?)
+                """,
+                (
+                    student_id,
+                    subject,
+                    mark
+                )
+            )
+
+            conn.commit()
+
+            st.success(
+                "Marks Saved Successfully ✅"
+            )
+        
+        
+        
+elif menu == "View Marks":
+
+        
+
+            st.header(
+        "📋 Student Marks"
+    )
+
+            df = pd.read_sql_query(
+        """
+        SELECT *
+        FROM marks
+        """,
+        conn
+    )
+
+            st.dataframe(df)
+
+            if len(df) > 0:
+
+                st.metric(
+            "Average Mark",
+            round(
+                df["mark"].mean(),
+                2
+            )
         )
