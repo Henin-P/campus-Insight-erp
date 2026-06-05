@@ -49,6 +49,7 @@ st.title("🎓 Student ERP Portal")
 menu = st.sidebar.selectbox(
     "Select Option",
 [
+    "Dashboard",
     "Add Student",
     "View Students",
     "Mark Attendance",
@@ -60,6 +61,53 @@ menu = st.sidebar.selectbox(
 # ---------------------------
 # ADD STUDENT
 # ---------------------------
+if menu == "Dashboard":
+
+    st.header("📊 Dashboard")
+
+    students_df = pd.read_sql_query(
+        "SELECT * FROM students",
+        conn
+    )
+
+    attendance_df = pd.read_sql_query(
+        "SELECT * FROM attendance",
+        conn
+    )
+
+    marks_df = pd.read_sql_query(
+        "SELECT * FROM marks",
+        conn
+    )
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric(
+            "👨‍🎓 Total Students",
+            len(students_df)
+        )
+
+    with col2:
+        st.metric(
+            "📝 Attendance Records",
+            len(attendance_df)
+        )
+
+    with col3:
+
+        avg_mark = 0
+
+        if len(marks_df) > 0:
+            avg_mark = round(
+                marks_df["mark"].mean(),
+                2
+            )
+
+        st.metric(
+            "📚 Average Marks",
+            avg_mark
+        )
 if menu == "Add Student":
 
     st.header("➕ Add Student")
