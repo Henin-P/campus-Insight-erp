@@ -1,3 +1,5 @@
+import pandas as pd
+import plotly.express as px
 import streamlit as st
 import sqlite3
 import pandas as pd
@@ -108,6 +110,37 @@ if menu == "Dashboard":
             "📚 Average Marks",
             avg_mark
         )
+    if len(marks_df) > 0:
+
+            st.subheader("📊 Marks Analysis")
+
+            fig = px.bar(
+                marks_df,
+                x="subject",
+                y="mark",
+                title="Subject Wise Marks"
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
+            highest_mark = marks_df["mark"].max()
+            lowest_mark = marks_df["mark"].min()
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.metric(
+                    "🏆 Highest Mark",
+                    highest_mark
+             )
+
+            with col2:
+                st.metric(
+                     "📉 Lowest Mark",
+                    lowest_mark
+            )   
 if menu == "Add Student":
 
     st.header("➕ Add Student")
@@ -126,7 +159,9 @@ if menu == "Add Student":
             "Statistics",
             "Computer Science",
             "Mathematics",
-            "Physics",
+            "Food Chemistry",
+            "Visual communication",
+            "Digital Journalism",
             "Commerce"
         ]
     )
