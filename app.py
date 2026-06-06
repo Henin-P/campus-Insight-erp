@@ -2,7 +2,6 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 import sqlite3
-import pandas as pd
 
 # ---------------------------
 # DATABASE CONNECTION
@@ -112,7 +111,7 @@ if menu == "Dashboard":
         )
     if len(marks_df) > 0:
 
-            st.subheader("📊 Marks Analysis")
+            st.subheader("📊 Academic Performance Analysis")
 
             fig = px.bar(
                 marks_df,
@@ -125,6 +124,52 @@ if menu == "Dashboard":
                 fig,
                 use_container_width=True
             )
+# ---------------------------
+# PERFORMANCE INSIGHTS
+# ---------------------------
+            
+            best_subject = marks_df.loc[
+                marks_df["mark"].idxmax()
+            ]
+
+            weak_subject = marks_df.loc[
+                 marks_df["mark"].idxmin()
+            ]
+
+            st.success(
+                f"🏆 Best Subject: {best_subject['subject']} ({best_subject['mark']})"
+            )
+
+            st.warning(
+                f"⚠️ Needs Improvement: {weak_subject['subject']} ({weak_subject['mark']})"
+            )
+
+            st.info(
+                f"📈 Performance Gap: {best_subject['mark'] - weak_subject['mark']} Marks"
+            )
+
+            ranking_df = marks_df.sort_values(
+                 by="mark",
+                ascending=False
+            )
+
+            ranking_df = ranking_df[
+                ["subject", "mark"]
+            ]
+
+            ranking_df.index = range(
+                1,
+                len(ranking_df) + 1
+            )
+            ranking_df.index.name = "Rank"
+
+            st.subheader("🏅 Subject Rankings")
+
+            st.dataframe(
+                ranking_df,
+                use_container_width=True
+            )
+        
             highest_mark = marks_df["mark"].max()
             lowest_mark = marks_df["mark"].min()
 
