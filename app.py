@@ -56,7 +56,9 @@ menu = st.sidebar.selectbox(
     "Mark Attendance",
     "Attendance Report",
     "Add Marks",
-    "View Marks"
+    "View Marks",
+    "Student Report",
+    "Upload Students"
 ]
 )
 # ---------------------------
@@ -186,7 +188,7 @@ if menu == "Dashboard":
                      "📉 Lowest Mark",
                     lowest_mark
             )   
-if menu == "Add Student":
+elif menu == "Add Student":
 
     st.header("➕ Add Student")
 
@@ -440,4 +442,153 @@ elif menu == "View Marks":
                 df["mark"].mean(),
                 2
             )
+        )
+            
+elif menu == "Student Report":
+
+    st.header("📑 Student Report")
+
+    students_df = pd.read_sql_query(
+        "SELECT * FROM students",
+        conn
+    )
+
+    if len(students_df) == 0:
+
+        st.warning("No students found")
+
+    else:
+
+        student_id = st.selectbox(
+            "Select Student",
+            students_df["student_id"]
+        )
+
+        student_info = students_df[
+            students_df["student_id"] == student_id
+        ]
+
+        st.subheader("🎓 Student Information")
+
+        st.write(
+            "Name:",
+            student_info["name"].values[0]
+        )
+
+        st.write(
+            "Department:",
+            student_info["department"].values[0]
+        )
+
+        st.write(
+            "Year:",
+            student_info["year"].values[0]
+        )
+
+        marks_df = pd.read_sql_query(
+            f"""
+            SELECT *
+            FROM marks
+            WHERE student_id = {student_id}
+            """,
+            conn
+        )
+
+        attendance_df = pd.read_sql_query(
+            f"""
+            SELECT *
+            FROM attendance
+            WHERE student_id = {student_id}
+            """,
+            conn
+        )
+
+        st.subheader("📚 Academic Performance")
+
+        if len(marks_df) > 0:
+
+            avg_mark = round(
+                marks_df["mark"].mean(),
+                2
+            )
+
+            st.metric(
+                "Average Mark",
+                avg_mark
+            )
+
+            report_marks = marks_df[
+                ["subject", "mark"]
+            ]
+
+            st.dataframe(
+                report_marks,
+                use_container_width=True
+            )
+
+        if len(attendance_df) > 0:
+
+            present = len(
+                attendance_df[
+                    attendance_df["status"] == "Present"
+                ]
+            )
+
+            attendance_percentage = round(
+                (present / len(attendance_df)) * 100,
+                2
+            )
+
+            st.metric(
+                "Attendance %",
+                attendance_percentage
+            )
+
+elif menu == "Upload Students":
+
+    st.header("📤 Upload Students")
+
+    uploaded_file = st.file_uploader(
+        "Choose Excel File",
+        type=["xlsx"]
+    )
+
+    if uploaded_file is not None:
+
+        df = pd.read_excel(
+            uploaded_file
+        )
+
+        st.subheader("Preview")
+
+        st.dataframe(df)
+
+        if st.button(
+                "Import Students"
+        ):
+
+                for _, row in df.iterrows():
+
+                    try:
+
+                        cursor.execute(
+                            """
+                            INSERT INTO students
+                            VALUES (?, ?, ?, ?)
+                            """,
+                            (
+                                row["student_id"],
+                                row["name"],
+                                row["department"],
+                                row["year"]
+                            )
+                )
+
+                    except:
+                        pass
+
+        conn.commit()
+
+        st.success(
+            "Students Imported Successfully ✅"
         )
