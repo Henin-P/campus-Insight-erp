@@ -58,7 +58,8 @@ menu = st.sidebar.selectbox(
     "Add Marks",
     "View Marks",
     "Student Report",
-    "Upload Students"
+    "Upload Students",
+    "Delete Student"
 ]
 )
 # ---------------------------
@@ -558,6 +559,10 @@ elif menu == "Upload Students":
         df = pd.read_excel(
             uploaded_file
         )
+        df.columns = [
+            col.strip().lower().replace(" ", "_")
+            for col in df.columns
+        ]
 
         st.subheader("Preview")
 
@@ -592,3 +597,46 @@ elif menu == "Upload Students":
         st.success(
             "Students Imported Successfully ✅"
         )
+        st.metric(
+            "Imported Students",
+            len(df)
+        )
+elif menu == "Delete Student":
+
+    st.header("🗑️ Delete Student")
+
+    students_df = pd.read_sql_query(
+        "SELECT * FROM students",
+        conn
+    )
+
+    if len(students_df) == 0:
+
+        st.warning(
+            "No Students Found"
+        )
+
+    else:
+
+        student_id = st.selectbox(
+            "Select Student ID",
+            students_df["student_id"]
+        )
+
+        if st.button(
+            "Delete Student"
+        ):
+
+            cursor.execute(
+                """
+                DELETE FROM students
+                WHERE student_id = ?
+                """,
+                (student_id,)
+            )
+
+            conn.commit()
+
+            st.success(
+                "Student Deleted Successfully ✅"
+            )        
